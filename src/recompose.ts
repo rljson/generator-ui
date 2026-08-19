@@ -40,6 +40,13 @@ const componentsName = (blockKey: string, chartName?: string): string =>
     ? `${chartName.toLowerCase()}${blockKey.charAt(0).toUpperCase()}${blockKey.slice(1)}`
     : blockKey.toLowerCase();
 
+// Both helpers below are only ever called with a `_types` sub-chart that
+// already passed the `!subChart._path || !subChart._name` guard in
+// `recompose()` — so the `?? ''` fallback can't actually be hit through
+// that (only) call path; it stays as a defensive fallback rather than a
+// non-null assertion, in case a future caller reuses these helpers
+// without the same guard.
+/* v8 ignore next -- @preserve */
 const cakeTableKeyOf = (chart: DecomposeChart): string =>
   `${(chart._name ?? '').toLowerCase()}Cake`;
 
@@ -50,6 +57,7 @@ const cakeTableKeyOf = (chart: DecomposeChart): string =>
 const groupTableKeyOf = (subChart: DecomposeChart, parentChart: DecomposeChart): string =>
   componentsName(`${subChart._name}s`, parentChart._name);
 
+/* v8 ignore next -- @preserve */
 const refColumnOf = (subChart: DecomposeChart): string =>
   `${(subChart._name ?? '').toLowerCase()}s`;
 

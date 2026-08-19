@@ -20,7 +20,20 @@ jobs:
         node-version: [22.x]
 
     steps:
+      # This repo's src/entity-types.ts imports the sibling generator repo
+      # directly across a "../../data-generator/..." relative path (the
+      # same multi-repo, sibling-checkout convention documented in the
+      # workspace's top-level README and used by
+      # scripts/clone-all-rljson-repos.js) — check it out one level above
+      # this repo's own checkout so that path resolves in CI too.
       - uses: actions/checkout@v4
+        with:
+          path: generator-ui
+
+      - uses: actions/checkout@v4
+        with:
+          repository: rljson/generator
+          path: data-generator
 
       # Corepack aktivieren, um sicherzustellen, dass pnpm funktioniert
       - name: Enable Corepack
@@ -34,14 +47,19 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
+          cache-dependency-path: generator-ui/pnpm-lock.yaml
 
       - name: Cache pnpm dependencies
         uses: actions/cache@v3
         with:
           path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('generator-ui/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
       - run: pnpm install --frozen-lockfile
+        working-directory: generator-ui
       - run: pnpm exec tsc --noEmit
+        working-directory: generator-ui
+      - run: pnpm test
+        working-directory: generator-ui

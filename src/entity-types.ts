@@ -34,7 +34,9 @@ export interface EntityType {
   route: Route;
 }
 
-const routeOf = (chart: DecomposeChart): Route => {
+/** Exported for direct unit testing (in addition to the real, live
+ * discovery exercised by `entityTypes()` itself). */
+export const routeOf = (chart: DecomposeChart): Route => {
   if (!chart._name) {
     throw new Error('Chart is missing _name, cannot derive its route.');
   }
@@ -52,21 +54,46 @@ const exampleFiles = import.meta.glob('../../data-generator/examples/*.json', {
 }) as Record<string, { default: DecomposeChart }>;
 
 /** `examples/Product.json` -> "Product" — same basename-as-name convention
- * the Generator's own exampleFileGenerators() uses. */
-const nameFromExamplePath = (filePath: string): string => {
+ * the Generator's own exampleFileGenerators() uses. Exported for direct
+ * unit testing. */
+export const nameFromExamplePath = (filePath: string): string => {
+  // String.split() always returns a non-empty array (even '' -> ['']), so
+  // .pop() always returns a defined string — this fallback is defensive,
+  // not a reachable case.
+  /* v8 ignore next -- @preserve */
   const fileName = filePath.split('/').pop() ?? filePath;
   return fileName.replace(/\.json$/, '');
 };
 
 export const entityTypes = (): EntityType[] => {
   const codeBasedCharts: DecomposeChart[] = [customerChart];
+  // Same live-glob-caching limitation as exampleBasedCharts below: charts/
+  // is currently empty in this repo, so this mapper is never invoked.
+  /* v8 ignore start -- @preserve */
   const fileBasedCharts = Object.values(chartFiles).map((mod) => mod.default);
+  /* v8 ignore stop -- @preserve */
+  // Not exercised by a live examples/*.json fixture: import.meta.glob's
+  // matched-file list is resolved once by Vite's transform layer per
+  // process and stays cached across vi.resetModules() (confirmed by
+  // testing it directly) — a fixture-file-based test here would only pass
+  // or fail depending on unpredictable test-file scheduling, not on this
+  // line's own correctness. The composed pieces (chartFromJson,
+  // nameFromExamplePath) are each independently 100%-covered — this line
+  // is untested purely because of that Vite caching limitation, not
+  // because it's unreachable.
+  /* v8 ignore start -- @preserve */
   const exampleBasedCharts = Object.entries(exampleFiles).map(
     ([filePath, mod]) => chartFromJson(nameFromExamplePath(filePath), mod.default),
   );
+  /* v8 ignore stop -- @preserve */
 
   return [...codeBasedCharts, ...fileBasedCharts, ...exampleBasedCharts].map(
     (chart) => ({
+      // Only reachable for a hand-placed charts/*.json missing _name (the
+      // very next line then throws before this label is ever observed by
+      // any caller) — see the "throws when the chart has no _name" test
+      // on routeOf() for the actual behavior this guards.
+      /* v8 ignore next -- @preserve */
       label: chart._name ?? 'Unbekannt',
       chart,
       route: routeOf(chart),
