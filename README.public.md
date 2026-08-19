@@ -91,26 +91,28 @@ build, same as any Vite app.
 ## How entity types are discovered
 
 [`src/entity-types.ts`](src/entity-types.ts) mirrors the Generator's own
-three ways of registering a data type — deliberately, so nothing here needs
+ways of registering a data type — deliberately, so nothing here needs
 inventing when the Generator gains a new one:
 
-- **File-based charts** (`data-generator/charts/*.json`): discovered
-  automatically via Vite's `import.meta.glob()` at build time. Adding one
-  there needs **no change in this repo** — reload the page and it appears.
-  (The Generator's own discovery in `chart-files.ts` uses Node's `fs`
-  module, which can't run in a browser bundle — `import.meta.glob` is the
-  browser-safe equivalent, resolved by Vite instead of at runtime.)
+- **File-based charts** (`data-generator/charts/*.json` — this is how
+  "Customer" itself is registered): discovered automatically via Vite's
+  `import.meta.glob()` at build time. Adding one there needs **no change
+  in this repo** — reload the page and it appears. (The Generator's own
+  discovery in `chart-files.ts` uses Node's `fs` module, which can't run
+  in a browser bundle — `import.meta.glob` is the browser-safe
+  equivalent, resolved by Vite instead of at runtime.)
 - **Example/schema-based charts** (`data-generator/examples/*.json`): also
   discovered automatically, no change needed here either — but these files
   are a plain example record or a JSON Schema, not a chart. They're run
   through the Generator's own `chartFromJson()` (imported straight from the
-  Generator repo, same cross-repo pattern as `customerChart`) to derive the
-  `DecomposeChart` from the data's own shape, exactly as the Generator's
-  CLI does for its own `examples/` discovery — see the Generator's README
-  for what `chartFromJson()` does and doesn't understand.
-- **Code-based charts** (e.g. `customers.ts`): imported explicitly, one
-  line per chart, in `entity-types.ts` — add the new chart's import there
-  when you add a code-based generator to the Generator repo.
+  Generator repo) to derive the `DecomposeChart` from the data's own
+  shape, exactly as the Generator's CLI does for its own `examples/`
+  discovery — see the Generator's README for what `chartFromJson()` does
+  and doesn't understand.
+- **Code-based charts** (real domain data instead of mechanical
+  placeholders — there isn't one today): would be imported explicitly,
+  one line per chart, in `entity-types.ts` when the Generator gains a
+  code-based generator (see the Generator's `chart-generator.ts`).
 
 Either way, an entity type only actually shows data once the **Server**
 hosts its route (`RLJSON_ROUTES`) and at least one record has been synced.

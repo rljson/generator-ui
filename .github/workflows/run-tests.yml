@@ -21,13 +21,12 @@ jobs:
 
     steps:
       # This repo's src/entity-types.ts imports the sibling generator repo
-      # directly across a "../../data-generator/..." relative path, and
-      # that repo's own customers.ts in turn imports the sibling RLJSON
-      # repo across "../../../RLJSON/..." — both are the same multi-repo,
-      # sibling-checkout convention documented in the workspace's
-      # top-level README and used by scripts/clone-all-rljson-repos.js.
-      # Check all three repos out under one shared workspace root so both
-      # relative paths resolve in CI too.
+      # directly across a "../../data-generator/..." relative path (the
+      # same multi-repo, sibling-checkout convention documented in the
+      # workspace's top-level README and used by
+      # scripts/clone-all-rljson-repos.js) — check it out alongside this
+      # repo under one shared workspace root so that path resolves in CI
+      # too.
       - uses: actions/checkout@v4
         with:
           path: generator-ui
@@ -36,11 +35,6 @@ jobs:
         with:
           repository: rljson/generator
           path: data-generator
-
-      - uses: actions/checkout@v4
-        with:
-          repository: rljson/rljson
-          path: RLJSON
 
       # Corepack aktivieren, um sicherzustellen, dass pnpm funktioniert
       - name: Enable Corepack

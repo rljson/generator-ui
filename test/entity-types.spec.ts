@@ -33,12 +33,12 @@ describe('nameFromExamplePath', () => {
 });
 
 describe('entityTypes (real, live discovery)', () => {
-  it('includes at least the code-based Customer entity type', () => {
+  it('includes Customer, discovered from the real charts/Customer.json file', () => {
     // Real cross-repo discovery against the sibling data-generator repo's
-    // current charts/ and examples/ directories (both empty today), so
-    // this is exactly {Customer} — see entity-types.ts's own doc comment
-    // for why file-based/example-based discovery needs no test-specific
-    // mocking: it's the same real glob Vite resolves for the app itself.
+    // actual charts/Customer.json (examples/ is empty today) — see
+    // entity-types.ts's own doc comment for why file-based/example-based
+    // discovery needs no test-specific mocking: it's the same real glob
+    // Vite resolves for the app itself.
     const types = entityTypes();
     const customer = types.find((t) => t.label === 'Customer');
     expect(customer).toBeDefined();
