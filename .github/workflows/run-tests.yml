@@ -20,7 +20,42 @@ jobs:
         node-version: [22.x]
 
     steps:
+      # This repo's src/entity-types.ts imports the sibling generator repo
+      # directly across a "../../data-generator/..." relative path (the
+      # same multi-repo, sibling-checkout convention documented in the
+      # workspace's top-level README and used by
+      # scripts/clone-all-rljson-repos.js) — check it out alongside this
+      # repo under one shared workspace root so that path resolves in CI
+      # too.
       - uses: actions/checkout@v4
+        with:
+          path: generator-ui
+
+      # Picks which branch of rljson/generator to check out: the PR's own
+      # source branch if a same-named one exists there too (lets a future
+      # coordinated pair of in-flight PRs test against each other before
+      # either merges), else the specific companion branch this PR
+      # currently depends on (rljson/generator#2, not yet merged — remove
+      # DEPENDENT_BRANCH once that lands), else main.
+      - name: Pick rljson/generator ref to check out
+        id: data-generator-ref
+        env:
+          DEPENDENT_BRANCH: move-generator-implementation-into-this-repo
+        run: |
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          if git ls-remote --exit-code --heads https://github.com/rljson/generator.git "$BRANCH" >/dev/null 2>&1; then
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --heads https://github.com/rljson/generator.git "$DEPENDENT_BRANCH" >/dev/null 2>&1; then
+            echo "ref=$DEPENDENT_BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          repository: rljson/generator
+          path: data-generator
+          ref: ${{ steps.data-generator-ref.outputs.ref }}
 
       # Corepack aktivieren, um sicherzustellen, dass pnpm funktioniert
       - name: Enable Corepack
@@ -28,21 +63,40 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
+        with:
+          # Pinned explicitly (matching package.json's own packageManager
+          # field) instead of letting the action auto-detect it from
+          # package.json — that auto-detection only looks at the default
+          # working directory (the workspace root), not this repo's own
+          # nested checkout path below.
+          version: 10.20.0
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
+          cache-dependency-path: |
+            generator-ui/pnpm-lock.yaml
+            data-generator/pnpm-lock.yaml
 
       - name: Cache pnpm dependencies
         uses: actions/cache@v3
         with:
           path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('generator-ui/pnpm-lock.yaml', 'data-generator/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+        working-directory: generator-ui
+      # tsc resolves src/entity-types.ts's cross-repo import of
+      # chart-from-json.ts, which needs THAT file's own dependencies
+      # (@rljson/converter, @rljson/json) resolvable from data-generator's
+      # own node_modules — install there too, not just in this repo.
+      - run: pnpm install --frozen-lockfile
+        working-directory: data-generator
+      - run: pnpm exec tsc --noEmit
+        working-directory: generator-ui
       - run: pnpm test
+        working-directory: generator-ui
