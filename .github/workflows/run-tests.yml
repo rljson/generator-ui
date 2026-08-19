@@ -21,11 +21,13 @@ jobs:
 
     steps:
       # This repo's src/entity-types.ts imports the sibling generator repo
-      # directly across a "../../data-generator/..." relative path (the
-      # same multi-repo, sibling-checkout convention documented in the
-      # workspace's top-level README and used by
-      # scripts/clone-all-rljson-repos.js) — check it out one level above
-      # this repo's own checkout so that path resolves in CI too.
+      # directly across a "../../data-generator/..." relative path, and
+      # that repo's own customers.ts in turn imports the sibling RLJSON
+      # repo across "../../../RLJSON/..." — both are the same multi-repo,
+      # sibling-checkout convention documented in the workspace's
+      # top-level README and used by scripts/clone-all-rljson-repos.js.
+      # Check all three repos out under one shared workspace root so both
+      # relative paths resolve in CI too.
       - uses: actions/checkout@v4
         with:
           path: generator-ui
@@ -35,12 +37,24 @@ jobs:
           repository: rljson/generator
           path: data-generator
 
+      - uses: actions/checkout@v4
+        with:
+          repository: rljson/rljson
+          path: RLJSON
+
       # Corepack aktivieren, um sicherzustellen, dass pnpm funktioniert
       - name: Enable Corepack
         run: corepack enable
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
+        with:
+          # Pinned explicitly (matching package.json's own packageManager
+          # field) instead of letting the action auto-detect it from
+          # package.json — that auto-detection only looks at the default
+          # working directory (the workspace root), not this repo's own
+          # nested checkout path below.
+          version: 10.20.0
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
