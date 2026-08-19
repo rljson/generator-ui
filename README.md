@@ -8,6 +8,12 @@ found in the LICENSE file in the root of this package.
 
 # @rljson/generator-ui
 
+Example browser UI. Connects to a running `@rljson/server` instance as a
+real, read-only sync `Client` and renders a table for every entity type it
+can find — not just one hardcoded type. The matching data source for this
+viewer lives in the sibling
+[generator](https://github.com/rljson/generator) repo.
+
 ## Users
 
 | File                                 | Purpose                     |

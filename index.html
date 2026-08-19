@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rljson UI Client</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        color: #1a2229;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin-top: 2rem;
+        border-bottom: 1px solid #d8dde2;
+        padding-bottom: 4px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+      th,
+      td {
+        border: 1px solid #d8dde2;
+        padding: 6px 10px;
+        text-align: left;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+      }
+      th {
+        background: #f5f6f8;
+      }
+      /* Cells holding a recursively rendered sub-object/array must not be
+         clipped like plain-text cells — they carry their own nested table. */
+      td.cell-nested {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        max-width: none;
+        vertical-align: top;
+      }
+      table.nested-table {
+        width: auto;
+        margin-top: 0;
+      }
+      table.nested-table th,
+      table.nested-table td {
+        font-size: 0.8rem;
+        max-width: 180px;
+      }
+      ul.nested-list {
+        margin: 0;
+        padding-left: 1.1rem;
+        font-size: 0.85rem;
+      }
+      ul.nested-list > li {
+        margin: 2px 0;
+      }
+      .empty-value {
+        color: #99a3ad;
+        font-style: italic;
+      }
+      .section-status {
+        color: #5c6773;
+        font-size: 0.85rem;
+        margin: 4px 0;
+      }
+      .section-error {
+        color: #b23b3b;
+        font-size: 0.85rem;
+      }
+      #status {
+        color: #5c6773;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>rljson UI Client</h1>
+    <p id="status">Verbinde…</p>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
