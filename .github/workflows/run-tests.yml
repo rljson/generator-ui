@@ -31,10 +31,31 @@ jobs:
         with:
           path: generator-ui
 
+      # Picks which branch of rljson/generator to check out: the PR's own
+      # source branch if a same-named one exists there too (lets a future
+      # coordinated pair of in-flight PRs test against each other before
+      # either merges), else the specific companion branch this PR
+      # currently depends on (rljson/generator#2, not yet merged — remove
+      # DEPENDENT_BRANCH once that lands), else main.
+      - name: Pick rljson/generator ref to check out
+        id: data-generator-ref
+        env:
+          DEPENDENT_BRANCH: move-generator-implementation-into-this-repo
+        run: |
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          if git ls-remote --exit-code --heads https://github.com/rljson/generator.git "$BRANCH" >/dev/null 2>&1; then
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --heads https://github.com/rljson/generator.git "$DEPENDENT_BRANCH" >/dev/null 2>&1; then
+            echo "ref=$DEPENDENT_BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
         with:
           repository: rljson/generator
           path: data-generator
+          ref: ${{ steps.data-generator-ref.outputs.ref }}
 
       # Corepack aktivieren, um sicherzustellen, dass pnpm funktioniert
       - name: Enable Corepack
