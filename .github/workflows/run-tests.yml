@@ -76,18 +76,26 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-          cache-dependency-path: generator-ui/pnpm-lock.yaml
+          cache-dependency-path: |
+            generator-ui/pnpm-lock.yaml
+            data-generator/pnpm-lock.yaml
 
       - name: Cache pnpm dependencies
         uses: actions/cache@v3
         with:
           path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('generator-ui/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('generator-ui/pnpm-lock.yaml', 'data-generator/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
       - run: pnpm install --frozen-lockfile
         working-directory: generator-ui
+      # tsc resolves src/entity-types.ts's cross-repo import of
+      # chart-from-json.ts, which needs THAT file's own dependencies
+      # (@rljson/converter, @rljson/json) resolvable from data-generator's
+      # own node_modules — install there too, not just in this repo.
+      - run: pnpm install --frozen-lockfile
+        working-directory: data-generator
       - run: pnpm exec tsc --noEmit
         working-directory: generator-ui
       - run: pnpm test
